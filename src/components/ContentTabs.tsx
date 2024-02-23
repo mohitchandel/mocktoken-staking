@@ -11,6 +11,8 @@ export default function ContentTabs() {
   const [stakeAmount, setStakeAmount] = useState<number>();
   const [stakerStatus, seStakerStatus] = useState<boolean>();
   const [stakerAmount, setStakerAmount] = useState<BigInt>();
+  const [rewardToken, setRewardToken] = useState<string>();
+
   const [stakerUnclaimedReward, setStakerUnclaimedReward] = useState<BigInt>();
   const { isConnected, address: walletAddress } = useAccount();
   const contractAddress = "0x6701069044705dc3eB49D4807225c9d1a22fAe35";
@@ -133,14 +135,31 @@ export default function ContentTabs() {
       }
       return undefined;
     };
-    const returnStakerDetails = async () => {
-      const details = await getStakerDetails();
-      if (details) {
-        seStakerStatus(details[0]);
-        setStakerAmount(details[1]);
-        setStakerUnclaimedReward(details[2]);
+
+    const getDetails = async () => {
+      if (isConnected && walletAddress) {
+        const { result } = await publicClient.simulateContract({
+          address: contractAddress,
+          abi: stakingAbi.abi,
+          functionName: "getDetails",
+          account: walletAddress,
+        });
+        return result;
       }
-      console.log(details);
+      return undefined;
+    };
+    const returnStakerDetails = async () => {
+      const stakerDetails = await getStakerDetails();
+      if (stakerDetails) {
+        seStakerStatus(stakerDetails[0]);
+        setStakerAmount(stakerDetails[1]);
+        setStakerUnclaimedReward(stakerDetails[2]);
+      }
+
+      const mainDetails = await getDetails();
+      if (mainDetails) {
+        setRewardToken(mainDetails[3]);
+      }
     };
     returnStakerDetails();
   }, [isConnected, walletAddress]);
@@ -219,6 +238,17 @@ export default function ContentTabs() {
                     {stakerStatus
                       ? "Claim Your Reward"
                       : "No stake data found, Please stake first"}
+                  </h4>
+                  <h4 className="py-5">
+                    {rewardToken ? (
+                      <a
+                        href={`https://mumbai.polygonscan.com/address/${rewardToken}`}
+                      >
+                        Reward Token: {rewardToken}
+                      </a>
+                    ) : (
+                      ""
+                    )}
                   </h4>
                   <h4>
                     {stakerUnclaimedReward

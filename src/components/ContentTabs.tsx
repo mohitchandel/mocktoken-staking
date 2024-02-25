@@ -4,11 +4,10 @@ import { useAccount } from "wagmi";
 import stakingAbi from "@/utils/abi/staking.json";
 import { walletClient, publicClient } from "@/utils/config";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { BaseError, ContractFunctionRevertedError } from "viem";
 import { Staking } from "@/components/Actions/Staking";
 import { Unstaking } from "@/components/Actions/Unstake";
 import { ClaimReward } from "./Actions/ClaimRewards";
+import { MintToken } from "./Actions/MintToken";
 
 export default function ContentTabs() {
   const [stakerStatus, seStakerStatus] = useState<boolean>();
@@ -70,6 +69,9 @@ export default function ContentTabs() {
   return (
     <div className="flex w-full flex-col">
       <Tabs radius="full" color="success" aria-label="Options">
+        <Tab key="mint" title="Mint Tokens">
+          <MintToken />
+        </Tab>
         <Tab key="stake" title="Stake">
           <Staking />
         </Tab>

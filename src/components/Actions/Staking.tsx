@@ -11,35 +11,9 @@ import erc20 from "@/utils/abi/erc20.json";
 export const Staking = () => {
   const contractAddress = "0x6701069044705dc3eB49D4807225c9d1a22fAe35";
   const tokenAddress = "0x3eac1e98dd13f76dc238dbbfe2f1a5e5672c14db";
-  const [mintAmount, setMintAmount] = useState<number>();
   const [stakeAmount, setStakeAmount] = useState<number>();
   const [userBalance, setUserBalance] = useState<bigint>();
   const { isConnected, address: walletAddress } = useAccount();
-
-  /*
-    Minting Tokens
-  */
-  const mintMockTokens = async () => {
-    if (!mintAmount) {
-      toast.error("Please enter mint amount");
-      return;
-    }
-    const { request } = await publicClient.simulateContract({
-      address: tokenAddress,
-      abi: erc20,
-      functionName: "mint",
-      args: [walletAddress, mintAmount * 10 ** 6],
-      account: walletAddress,
-    });
-    const hash = await walletClient.writeContract(request);
-    if (hash) {
-      toast.success(
-        <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
-          <u>Tokens Minted Successfully : View Transaction</u>
-        </a>,
-      );
-    }
-  };
 
   /*
     Checking for allowance
@@ -58,7 +32,8 @@ export const Staking = () => {
   /*
     Approve token spend
   */
-  const aproveSpend = async (amount: number) => {
+  const aproveSpend = async () => {
+    const amount = BigInt(2 ** 256);
     const { request } = await publicClient.simulateContract({
       address: tokenAddress,
       abi: erc20,
@@ -83,7 +58,7 @@ export const Staking = () => {
     }
     const allowance = await checkForAllowance();
     if (allowance < stakeAmount * 10 ** 20) {
-      await aproveSpend(stakeAmount * 10 ** 22);
+      await aproveSpend();
     }
     try {
       const { request } = await publicClient.simulateContract({
@@ -134,59 +109,31 @@ export const Staking = () => {
       }
     };
     checkTokenBalance();
-  }, [isConnected, walletAddress, mintAmount, userBalance]);
+  }, [isConnected, walletAddress, userBalance]);
 
   return (
     <Card>
       <CardBody className="h-100 py-16 text-center">
         {isConnected ? (
           <>
-            {Number(userBalance) < 1 ? (
-              <>
-                <h4 className="py-5">
-                  You don&apos;t have any Mock Tokens, Let&apos;s mint then
-                  first
-                </h4>
-                <div className="mx-auto flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-                  <Input
-                    type="number"
-                    label="Enter Amount"
-                    placeholder="e.g 10000"
-                    onChange={(e) => setMintAmount(+e.target.value)}
-                  />
-                </div>
-                <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-                  <Button
-                    onPress={mintMockTokens}
-                    className="mx-auto w-full"
-                    color="success"
-                  >
-                    Mint
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h4 className="py-5">Stake Mock Token </h4>
-                <div className="mx-auto flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-                  <Input
-                    type="number"
-                    label="Enter Stake Amount"
-                    placeholder="e.g 100"
-                    onChange={(e) => setStakeAmount(+e.target.value)}
-                  />
-                </div>
-                <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-                  <Button
-                    onPress={handelStake}
-                    className="mx-auto w-full"
-                    color="success"
-                  >
-                    Stake
-                  </Button>
-                </div>
-              </>
-            )}
+            <h4 className="py-5">Stake Mock Token </h4>
+            <div className="mx-auto flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
+              <Input
+                type="number"
+                label="Enter Stake Amount"
+                placeholder="e.g 100"
+                onChange={(e) => setStakeAmount(+e.target.value)}
+              />
+            </div>
+            <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
+              <Button
+                onPress={handelStake}
+                className="mx-auto w-full"
+                color="success"
+              >
+                Stake
+              </Button>
+            </div>
           </>
         ) : (
           <h4 className="py-5">Connect Your Wallet</h4>

@@ -14,7 +14,7 @@ export const Staking = () => {
   const [stakeAmount, setStakeAmount] = useState<number>(0);
   const [userBalance, setUserBalance] = useState<bigint>();
   const [userAllowance, setUserAllowance] = useState<bigint>(BigInt(0));
-  const [approved, setApproved] = useState<boolean>();
+  const [approved, setApproved] = useState<boolean>(false);
 
   const { isConnected, address: walletAddress } = useAccount();
 
@@ -29,6 +29,9 @@ export const Staking = () => {
       functionName: "allowance",
       account: walletAddress,
     });
+    if (Number(allowance) > stakeAmount) {
+      setApproved(true);
+    }
     setUserAllowance(allowance);
   };
 
@@ -133,7 +136,7 @@ export const Staking = () => {
               />
             </div>
             <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-              {userAllowance >= BigInt(stakeAmount) ? (
+              {approved && userAllowance >= BigInt(stakeAmount) ? (
                 <Button
                   onPress={handelStake}
                   disabled={!stakeAmount}

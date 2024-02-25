@@ -5,14 +5,11 @@ import toast from "react-hot-toast";
 import { walletClient, publicClient } from "@/utils/config";
 import { BaseError, ContractFunctionRevertedError } from "viem";
 import stakingAbi from "@/utils/abi/staking.json";
+import { useEffect, useState } from "react";
 
-export const Unstaking = ({
-  stakerStatus,
-  stakerAmount,
-}: {
-  stakerStatus: boolean | undefined;
-  stakerAmount: number;
-}) => {
+export const Unstaking = () => {
+  const [stakerStatus, setStakerStatus] = useState<boolean>();
+  const [stakerAmount, setStakerAmount] = useState<BigInt>();
   const contractAddress = "0x6701069044705dc3eB49D4807225c9d1a22fAe35";
   const { isConnected, address: walletAddress } = useAccount();
 
@@ -36,13 +33,13 @@ export const Unstaking = ({
         toast.success(
           <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
             <u>UnStaking Successfully : View Transaction</u>
-          </a>,
+          </a>
         );
       }
     } catch (err) {
       if (err instanceof BaseError) {
         const revertError = err.walk(
-          (err) => err instanceof ContractFunctionRevertedError,
+          (err) => err instanceof ContractFunctionRevertedError
         );
 
         if (revertError instanceof ContractFunctionRevertedError) {
@@ -56,6 +53,21 @@ export const Unstaking = ({
     }
   };
 
+  useEffect(() => {
+    const getStakerDetails = async () => {
+      const result: any = await publicClient.readContract({
+        address: contractAddress,
+        abi: stakingAbi.abi,
+        args: [walletAddress],
+        functionName: "getStakerInfo",
+        account: walletAddress,
+      });
+      setStakerStatus(result[0] as boolean);
+      setStakerAmount(result[1] as BigInt);
+    };
+    getStakerDetails();
+  }, []);
+
   return (
     <Card>
       <CardBody className="h-100 py-16 text-center">
@@ -67,7 +79,9 @@ export const Unstaking = ({
                 : "No stake data found, Please stake first"}
             </h4>
             <h4>
-              {stakerAmount ? `Staked Amount is ${stakerAmount / 10 ** 6}` : ""}
+              {stakerAmount
+                ? `Staked Amount is ${Number(stakerAmount) / 10 ** 6}`
+                : ""}
             </h4>
             <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 text-center md:flex-nowrap">
               {stakerStatus ? (

@@ -10,10 +10,10 @@ import { ClaimReward } from "./Actions/ClaimRewards";
 import { MintToken } from "./Actions/MintToken";
 
 export default function ContentTabs() {
-  const [stakerStatus, seStakerStatus] = useState<boolean>();
-  const [stakerAmount, setStakerAmount] = useState<BigInt>();
   const [rewardToken, setRewardToken] = useState<string>();
   const [claimedDelay, setClaimedDelay] = useState<any>();
+  const [stakerStatus, seStakerStatus] = useState<boolean>();
+  const [stakerAmount, setStakerAmount] = useState<BigInt>();
 
   const [stakerUnclaimedReward, setStakerUnclaimedReward] = useState<BigInt>();
   const { isConnected, address: walletAddress } = useAccount();
@@ -76,10 +76,7 @@ export default function ContentTabs() {
           <Staking />
         </Tab>
         <Tab key="unstake" title="Unstake">
-          <Unstaking
-            stakerStatus={stakerStatus}
-            stakerAmount={Number(stakerAmount)}
-          />
+          <Unstaking />
         </Tab>
         <Tab key="claim" title="Claim Reward">
           <ClaimReward

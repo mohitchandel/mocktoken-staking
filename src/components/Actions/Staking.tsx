@@ -1,5 +1,5 @@
 "use client";
-import { Tabs, Tab, Card, CardBody, Input, Button } from "@nextui-org/react";
+import { Card, CardBody, Input, Button } from "@nextui-org/react";
 import { useAccount } from "wagmi";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";

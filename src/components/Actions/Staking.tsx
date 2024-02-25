@@ -11,29 +11,32 @@ import erc20 from "@/utils/abi/erc20.json";
 export const Staking = () => {
   const contractAddress = "0x6701069044705dc3eB49D4807225c9d1a22fAe35";
   const tokenAddress = "0x3eac1e98dd13f76dc238dbbfe2f1a5e5672c14db";
-  const [stakeAmount, setStakeAmount] = useState<number>();
+  const [stakeAmount, setStakeAmount] = useState<number>(0);
   const [userBalance, setUserBalance] = useState<bigint>();
+  const [userAllowance, setUserAllowance] = useState<bigint>(BigInt(0));
+  const [approved, setApproved] = useState<boolean>();
+
   const { isConnected, address: walletAddress } = useAccount();
 
   /*
     Checking for allowance
   */
   const checkForAllowance = async () => {
-    const { result: allowance } = await publicClient.simulateContract({
+    const allowance: any = await publicClient.readContract({
       address: tokenAddress,
       abi: erc20,
       args: [walletAddress, contractAddress],
       functionName: "allowance",
       account: walletAddress,
     });
-    return allowance;
+    setUserAllowance(allowance);
   };
 
   /*
     Approve token spend
   */
-  const aproveSpend = async () => {
-    const amount = BigInt(2 ** 256);
+  const approveSpend = async () => {
+    const amount = BigInt(2 ** 256 / 2);
     const { request } = await publicClient.simulateContract({
       address: tokenAddress,
       abi: erc20,
@@ -42,6 +45,8 @@ export const Staking = () => {
       account: walletAddress,
     });
     await walletClient.writeContract(request);
+    setStakeAmount(0);
+    setApproved(true);
   };
 
   /*
@@ -52,14 +57,11 @@ export const Staking = () => {
       toast.error("Please enter the amount");
       return;
     }
-    if (stakeAmount * 10 ** 6 > Number(userBalance)) {
+    if (stakeAmount > Number(userBalance)) {
       toast.error("Your amount is greater than your balance");
       return;
     }
-    const allowance = await checkForAllowance();
-    if (allowance < stakeAmount * 10 ** 20) {
-      await aproveSpend();
-    }
+
     try {
       const { request } = await publicClient.simulateContract({
         address: contractAddress,
@@ -73,13 +75,13 @@ export const Staking = () => {
         toast.success(
           <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
             <u>Staking Successfully : View Transaction</u>
-          </a>,
+          </a>
         );
       }
     } catch (err) {
       if (err instanceof BaseError) {
         const revertError = err.walk(
-          (err) => err instanceof ContractFunctionRevertedError,
+          (err) => err instanceof ContractFunctionRevertedError
         );
         if (revertError instanceof ContractFunctionRevertedError) {
           const errorName = revertError.data?.errorName ?? "";
@@ -111,6 +113,10 @@ export const Staking = () => {
     checkTokenBalance();
   }, [isConnected, walletAddress, userBalance]);
 
+  useEffect(() => {
+    checkForAllowance();
+  }, [stakeAmount, userAllowance, approved]);
+
   return (
     <Card>
       <CardBody className="h-100 py-16 text-center">
@@ -122,17 +128,29 @@ export const Staking = () => {
                 type="number"
                 label="Enter Stake Amount"
                 placeholder="e.g 100"
+                value={stakeAmount.toString()}
                 onChange={(e) => setStakeAmount(+e.target.value)}
               />
             </div>
             <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-              <Button
-                onPress={handelStake}
-                className="mx-auto w-full"
-                color="success"
-              >
-                Stake
-              </Button>
+              {userAllowance >= BigInt(stakeAmount) ? (
+                <Button
+                  onPress={handelStake}
+                  disabled={!stakeAmount}
+                  className="mx-auto w-full"
+                  color="success"
+                >
+                  Stake
+                </Button>
+              ) : (
+                <Button
+                  onPress={approveSpend}
+                  className="mx-auto w-full"
+                  color="primary"
+                >
+                  Approve Spend
+                </Button>
+              )}
             </div>
           </>
         ) : (

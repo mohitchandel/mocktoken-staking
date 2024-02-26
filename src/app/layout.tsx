@@ -8,16 +8,9 @@ const inter = Inter({ subsets: ["latin"] });
 import "@rainbow-me/rainbowkit/styles.css";
 import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
-import {
-  mainnet,
-  polygon,
-  optimism,
-  arbitrum,
-  base,
-  zora,
-  polygonMumbai,
-} from "wagmi/chains";
+import { polygonMumbai } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import Header from "@/components/Header";
 
 const config = getDefaultConfig({
   appName: "My RainbowKit App",
@@ -40,7 +33,10 @@ export default function RootLayout({
           <Toaster />
           <WagmiProvider config={config}>
             <QueryClientProvider client={queryClient}>
-              <RainbowKitProvider>{children}</RainbowKitProvider>
+              <RainbowKitProvider>
+                <Header />
+                {children}
+              </RainbowKitProvider>
             </QueryClientProvider>
           </WagmiProvider>
         </NextUIProvider>

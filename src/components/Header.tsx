@@ -15,11 +15,33 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function Header() {
   return (
-    <Navbar>
+    <Navbar className="bg-black">
       <NavbarContent>
         <NavbarBrand>
           <p className="font-bold text-inherit">Mock Staking</p>
         </NavbarBrand>
+      </NavbarContent>
+      <NavbarContent>
+        <NavbarItem>
+          <Link className="text-white" href="/">
+            Mint
+          </Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link className="text-white" href="/stake">
+            Stake
+          </Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link className="text-white" href="/unstake">
+            UnStake
+          </Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link className="text-white" href="/claim">
+            Claim Rewards
+          </Link>
+        </NavbarItem>
       </NavbarContent>
       <NavbarContent justify="end">
         <NavbarItem className="hidden lg:flex">

@@ -1,5 +1,5 @@
 "use client";
-import { Card, CardBody, Input, Button } from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
 import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
 import { walletClient, publicClient } from "@/utils/config";
@@ -7,7 +7,7 @@ import { BaseError, ContractFunctionRevertedError } from "viem";
 import stakingAbi from "@/utils/abi/staking.json";
 import { useEffect, useState } from "react";
 
-export const Unstaking = () => {
+export default function Unstake() {
   const [stakerStatus, setStakerStatus] = useState<boolean>();
   const [stakerAmount, setStakerAmount] = useState<BigInt>();
   const contractAddress = "0x6701069044705dc3eB49D4807225c9d1a22fAe35";
@@ -69,8 +69,8 @@ export const Unstaking = () => {
   }, []);
 
   return (
-    <Card>
-      <CardBody className="h-100 py-16 text-center">
+    <div>
+      <main className="flex flex-col items-center justify-between bg-[#fff] p-24">
         {isConnected ? (
           <>
             <h4 className="py-5">
@@ -102,7 +102,7 @@ export const Unstaking = () => {
         ) : (
           <h4 className="py-5">Connect Your Wallet</h4>
         )}
-      </CardBody>
-    </Card>
+      </main>
+    </div>
   );
-};
+}

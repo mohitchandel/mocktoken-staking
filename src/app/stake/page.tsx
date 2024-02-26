@@ -8,35 +8,19 @@ import { BaseError, ContractFunctionRevertedError } from "viem";
 import stakingAbi from "@/utils/abi/staking.json";
 import erc20 from "@/utils/abi/erc20.json";
 
-export const Staking = () => {
+export default function Stake() {
   const contractAddress = "0x6701069044705dc3eB49D4807225c9d1a22fAe35";
   const tokenAddress = "0x3eac1e98dd13f76dc238dbbfe2f1a5e5672c14db";
   const [stakeAmount, setStakeAmount] = useState<number>(0);
   const [userBalance, setUserBalance] = useState<bigint>();
   const [userAllowance, setUserAllowance] = useState<bigint>(BigInt(0));
-  const [approved, setApproved] = useState<boolean>(false);
+  const [approved, setApprovedHash] = useState<any>();
   const [hash, setHash] = useState<any>();
   const [reciept, setReciept] = useState<any>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isApproving, setIsApproving] = useState<boolean>(false);
 
   const { isConnected, address: walletAddress } = useAccount();
-
-  /*
-    Checking for allowance
-  */
-  const checkForAllowance = async () => {
-    const allowance: any = await publicClient.readContract({
-      address: tokenAddress,
-      abi: erc20,
-      args: [walletAddress, contractAddress],
-      functionName: "allowance",
-      account: walletAddress,
-    });
-    if (Number(allowance) > stakeAmount) {
-      setApproved(true);
-    }
-    setUserAllowance(allowance);
-  };
 
   /*
     Approve token spend
@@ -50,9 +34,12 @@ export const Staking = () => {
       args: [contractAddress, amount],
       account: walletAddress,
     });
-    await walletClient.writeContract(request);
+    const approveHash = await walletClient.writeContract(request);
     setStakeAmount(0);
-    setApproved(true);
+    setIsApproving(true);
+    if (approveHash) {
+      setApprovedHash(approveHash);
+    }
   };
 
   /*
@@ -84,7 +71,7 @@ export const Staking = () => {
     } catch (err) {
       if (err instanceof BaseError) {
         const revertError = err.walk(
-          (err) => err instanceof ContractFunctionRevertedError,
+          (err) => err instanceof ContractFunctionRevertedError
         );
         if (revertError instanceof ContractFunctionRevertedError) {
           const errorName = revertError.data?.errorName ?? "";
@@ -117,8 +104,19 @@ export const Staking = () => {
   }, [isConnected, walletAddress, userBalance]);
 
   useEffect(() => {
+    const checkForAllowance = async () => {
+      const allowance: any = await publicClient.readContract({
+        address: tokenAddress,
+        abi: erc20,
+        args: [walletAddress, contractAddress],
+        functionName: "allowance",
+        account: walletAddress,
+      });
+      console.log(allowance);
+      setUserAllowance(allowance);
+    };
     checkForAllowance();
-  }, [stakeAmount, userAllowance, approved, checkForAllowance]);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -131,16 +129,34 @@ export const Staking = () => {
         toast.success(
           <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
             <u>Staking Successfully : View Transaction</u>
-          </a>,
+          </a>
         );
       }
       setIsLoading(false);
     })();
   }, [hash]);
 
+  useEffect(() => {
+    (async () => {
+      if (approved) {
+        const txReciept = await publicClient.waitForTransactionReceipt({
+          hash: approved,
+        });
+        setReciept(txReciept);
+
+        toast.success(
+          <a href={`https://mumbai.polygonscan.com/tx/${approved}`}>
+            <u>Approved: View Transaction</u>
+          </a>
+        );
+      }
+      setIsApproving(false);
+    })();
+  }, [approved]);
+
   return (
-    <Card>
-      <CardBody className="h-100 py-16 text-center">
+    <div>
+      <main className="flex flex-col items-center justify-between bg-[#fff] p-24">
         {isConnected ? (
           <>
             <h4 className="py-5">Stake Mock Token </h4>
@@ -154,23 +170,24 @@ export const Staking = () => {
               />
             </div>
             <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-              {approved && userAllowance > BigInt(stakeAmount) ? (
+              {userAllowance > BigInt(stakeAmount) ? (
                 <Button
                   onPress={handelStake}
                   disabled={!stakeAmount}
                   className="mx-auto w-full"
                   color="success"
-                  isDisabled={isLoading}
+                  isDisabled={isLoading || isApproving}
                 >
-                  {isLoading ? "Staking..." : "Stake"}
+                  {isLoading || isApproving ? "Waiting..." : "Stake"}
                 </Button>
               ) : (
                 <Button
                   onPress={approveSpend}
                   className="mx-auto w-full"
                   color="primary"
+                  isDisabled={isLoading || isApproving}
                 >
-                  Approve Spend
+                  {isLoading || isApproving ? "Waiting..." : "Approve"}
                 </Button>
               )}
             </div>
@@ -178,7 +195,7 @@ export const Staking = () => {
         ) : (
           <h4 className="py-5">Connect Your Wallet</h4>
         )}
-      </CardBody>
-    </Card>
+      </main>
+    </div>
   );
-};
+}

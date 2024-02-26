@@ -15,6 +15,9 @@ export const Staking = () => {
   const [userBalance, setUserBalance] = useState<bigint>();
   const [userAllowance, setUserAllowance] = useState<bigint>(BigInt(0));
   const [approved, setApproved] = useState<boolean>(false);
+  const [hash, setHash] = useState<any>();
+  const [reciept, setReciept] = useState<any>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const { isConnected, address: walletAddress } = useAccount();
 
@@ -73,18 +76,15 @@ export const Staking = () => {
         args: [stakeAmount * 10 ** 6],
         account: walletAddress,
       });
-      const hash = await walletClient.writeContract(request);
-      if (hash) {
-        toast.success(
-          <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
-            <u>Staking Successfully : View Transaction</u>
-          </a>
-        );
+      const txhash = await walletClient.writeContract(request);
+      if (txhash) {
+        setIsLoading(true);
+        setHash(txhash);
       }
     } catch (err) {
       if (err instanceof BaseError) {
         const revertError = err.walk(
-          (err) => err instanceof ContractFunctionRevertedError
+          (err) => err instanceof ContractFunctionRevertedError,
         );
         if (revertError instanceof ContractFunctionRevertedError) {
           const errorName = revertError.data?.errorName ?? "";
@@ -118,7 +118,25 @@ export const Staking = () => {
 
   useEffect(() => {
     checkForAllowance();
-  }, [stakeAmount, userAllowance, approved]);
+  }, [stakeAmount, userAllowance, approved, checkForAllowance]);
+
+  useEffect(() => {
+    (async () => {
+      if (hash) {
+        const txReciept = await publicClient.waitForTransactionReceipt({
+          hash,
+        });
+        setReciept(txReciept);
+
+        toast.success(
+          <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
+            <u>Staking Successfully : View Transaction</u>
+          </a>,
+        );
+      }
+      setIsLoading(false);
+    })();
+  }, [hash]);
 
   return (
     <Card>
@@ -136,14 +154,15 @@ export const Staking = () => {
               />
             </div>
             <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-              {approved && userAllowance >= BigInt(stakeAmount) ? (
+              {approved && userAllowance > BigInt(stakeAmount) ? (
                 <Button
                   onPress={handelStake}
                   disabled={!stakeAmount}
                   className="mx-auto w-full"
                   color="success"
+                  isDisabled={isLoading}
                 >
-                  Stake
+                  {isLoading ? "Staking..." : "Stake"}
                 </Button>
               ) : (
                 <Button

@@ -9,6 +9,9 @@ import erc20 from "@/utils/abi/erc20.json";
 export const MintToken = () => {
   const tokenAddress = "0x3eac1e98dd13f76dc238dbbfe2f1a5e5672c14db";
   const [mintAmount, setMintAmount] = useState<number>();
+  const [hash, setHash] = useState<any>();
+  const [reciept, setReciept] = useState<any>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { isConnected, address: walletAddress } = useAccount();
 
   /*
@@ -26,15 +29,30 @@ export const MintToken = () => {
       args: [walletAddress, mintAmount * 10 ** 6],
       account: walletAddress,
     });
-    const hash = await walletClient.writeContract(request);
-    if (hash) {
-      toast.success(
-        <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
-          <u>Tokens Minted Successfully : View Transaction</u>
-        </a>,
-      );
+    const txhash = await walletClient.writeContract(request);
+    if (txhash) {
+      setHash(txhash);
+      setIsLoading(true);
     }
   };
+
+  useEffect(() => {
+    (async () => {
+      if (hash) {
+        const txReciept = await publicClient.waitForTransactionReceipt({
+          hash,
+        });
+        setReciept(txReciept);
+
+        toast.success(
+          <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
+            <u>Tokens Minted Successfully : View Transaction</u>
+          </a>,
+        );
+      }
+      setIsLoading(false);
+    })();
+  }, [hash]);
 
   return (
     <Card>
@@ -55,8 +73,9 @@ export const MintToken = () => {
                 onPress={mintMockTokens}
                 className="mx-auto w-full"
                 color="success"
+                isDisabled={isLoading}
               >
-                Mint
+                {isLoading ? "Minting..." : "Mint"}
               </Button>
             </div>
           </>

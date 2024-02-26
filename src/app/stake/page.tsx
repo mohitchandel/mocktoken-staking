@@ -116,7 +116,7 @@ export default function Stake() {
       setUserAllowance(allowance);
     };
     checkForAllowance();
-  }, []);
+  }, [approved, userAllowance]);
 
   useEffect(() => {
     (async () => {
@@ -170,7 +170,7 @@ export default function Stake() {
               />
             </div>
             <div className="mx-auto mt-5 flex w-2/5 flex-wrap gap-4 md:flex-nowrap">
-              {userAllowance > BigInt(stakeAmount) ? (
+              {approved || userAllowance > BigInt(stakeAmount) ? (
                 <Button
                   onPress={handelStake}
                   disabled={!stakeAmount}
@@ -193,7 +193,7 @@ export default function Stake() {
             </div>
           </>
         ) : (
-          <h4 className="py-5">Connect Your Wallet</h4>
+          <h4 className="py-5 text-black">Connect Your Wallet</h4>
         )}
       </main>
     </div>

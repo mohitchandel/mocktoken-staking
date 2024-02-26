@@ -62,7 +62,7 @@ export default function Claim() {
       }
     };
     returnStakerDetails();
-  }, [isConnected, walletAddress]);
+  });
   /*
     Handling claim Reward of Mock Token
   */
@@ -104,12 +104,12 @@ export default function Claim() {
       <main className="flex flex-col items-center justify-between bg-[#fff] p-24">
         {isConnected ? (
           <>
-            <h4 className="py-5">
+            <h4 className="py-5 text-black">
               {stakerStatus
                 ? "Claim Your Reward"
                 : "No stake data found, Please stake first"}
             </h4>
-            <h4 className="py-5">
+            <h4 className="py-5 text-black">
               {rewardToken ? (
                 <a
                   href={`https://mumbai.polygonscan.com/address/${rewardToken}`}
@@ -120,7 +120,7 @@ export default function Claim() {
                 ""
               )}
             </h4>
-            <h4>
+            <h4 className="text-black">
               {stakerUnclaimedReward
                 ? `Your Unclaimed Reward Amount is ${
                     Number(stakerUnclaimedReward) / 10 ** 6
@@ -139,7 +139,7 @@ export default function Claim() {
             </div>
           </>
         ) : (
-          <h4 className="py-5">Connect Your Wallet</h4>
+          <h4 className="py-5 text-black">Connect Your Wallet</h4>
         )}
       </main>
     </div>

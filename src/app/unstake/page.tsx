@@ -12,6 +12,9 @@ export default function Unstake() {
   const [stakerAmount, setStakerAmount] = useState<BigInt>();
   const contractAddress = "0x6701069044705dc3eB49D4807225c9d1a22fAe35";
   const { isConnected, address: walletAddress } = useAccount();
+  const [hash, setHash] = useState<any>();
+  const [reciept, setReciept] = useState<any>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   /*
     Handling Unstaking of Mock Token
@@ -28,7 +31,11 @@ export default function Unstake() {
         functionName: "unstake",
         account: walletAddress,
       });
-      const hash = await walletClient.writeContract(request);
+      const txhash = await walletClient.writeContract(request);
+      if (txhash) {
+        setIsLoading(true);
+        setHash(txhash);
+      }
       if (hash) {
         toast.success(
           <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
@@ -54,6 +61,24 @@ export default function Unstake() {
   };
 
   useEffect(() => {
+    (async () => {
+      if (hash) {
+        const txReciept = await publicClient.waitForTransactionReceipt({
+          hash,
+        });
+        setReciept(txReciept);
+
+        toast.success(
+          <a href={`https://mumbai.polygonscan.com/tx/${hash}`}>
+            <u>Unstake Successfully : View Transaction</u>
+          </a>
+        );
+      }
+      setIsLoading(false);
+    })();
+  }, [hash]);
+
+  useEffect(() => {
     const getStakerDetails = async () => {
       const result: any = await publicClient.readContract({
         address: contractAddress,
@@ -66,7 +91,7 @@ export default function Unstake() {
       setStakerAmount(result[1] as BigInt);
     };
     getStakerDetails();
-  }, []);
+  });
 
   return (
     <div>
@@ -78,7 +103,7 @@ export default function Unstake() {
                 ? "Unstake Mock Token"
                 : "No stake data found, Please stake first"}
             </h4>
-            <h4>
+            <h4 className="text-black">
               {stakerAmount
                 ? `Staked Amount is ${Number(stakerAmount) / 10 ** 6}`
                 : ""}
@@ -89,8 +114,9 @@ export default function Unstake() {
                   onPress={handelUnStake}
                   className="mx-auto w-full"
                   color="danger"
+                  isDisabled={isLoading}
                 >
-                  UnStake
+                  {isLoading ? "unstaking.." : "UnStake"}
                 </Button>
               ) : (
                 <Button className="mx-auto w-full" color="danger">
@@ -100,7 +126,7 @@ export default function Unstake() {
             </div>
           </>
         ) : (
-          <h4 className="py-5">Connect Your Wallet</h4>
+          <h4 className="py-5 text-black">Connect Your Wallet</h4>
         )}
       </main>
     </div>
